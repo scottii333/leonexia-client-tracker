@@ -27,6 +27,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import AddCompanyDialog from "./AddCompanyDialog";
 import EditCompanyDialog from "./EditCompanyDialog";
@@ -50,6 +59,9 @@ const CompaniesTable = () => {
   const [status, setStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [deletingCompanyId, setDeletingCompanyId] = useState<string | null>(
+    null
+  );
 
   const fetchCompanies = async (page: number = 1): Promise<void> => {
     setIsLoading(true);
@@ -87,8 +99,6 @@ const CompaniesTable = () => {
   }, [search, industry, status]);
 
   const handleDelete = async (id: string): Promise<void> => {
-    if (!confirm("Are you sure you want to delete this company?")) return;
-
     try {
       const res = await fetch(`/api/companies/${id}`, {
         method: "DELETE",
@@ -100,6 +110,7 @@ const CompaniesTable = () => {
       }
 
       toast.success("Company deleted successfully");
+      setDeletingCompanyId(null);
       fetchCompanies(pagination.page);
     } catch (err) {
       const errorMessage =
@@ -268,7 +279,7 @@ const CompaniesTable = () => {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleDelete(company.id)}
+                      onClick={() => setDeletingCompanyId(company.id)}
                     >
                       Delete
                     </Button>
@@ -340,6 +351,37 @@ const CompaniesTable = () => {
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={deletingCompanyId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingCompanyId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Company</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this company? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-2 justify-end">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingCompanyId) {
+                  handleDelete(deletingCompanyId);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
