@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-const checkAuth = async () => {
+const checkAuth = async (): Promise<boolean> => {
   const cookieStore = await cookies();
   return cookieStore.get("auth")?.value === "1";
 };
 
-// PUT: Update company
+// PUT:  Update company
 export const PUT = async (
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
     const isAuth = await checkAuth();
@@ -18,7 +18,8 @@ export const PUT = async (
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    // Await params here!
+    const { id } = await params;
     const body = await req.json();
     const {
       company_name,
@@ -63,7 +64,7 @@ export const PUT = async (
       );
     }
 
-    // Validate contact number (PH format: 09XXXXXXXXX - 09 followed by 10 digits)
+    // Validate contact number (PH format:  09XXXXXXXXX)
     const phoneRegex = /^09\d{10}$/;
     if (!phoneRegex.test(contact_number)) {
       return NextResponse.json(
@@ -113,10 +114,10 @@ export const PUT = async (
   }
 };
 
-// DELETE:  Delete company
+// DELETE: Delete company
 export const DELETE = async (
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
     const isAuth = await checkAuth();
@@ -124,7 +125,8 @@ export const DELETE = async (
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    // Await params here!
+    const { id } = await params;
 
     const { error } = await supabaseAdmin
       .from("companies")
