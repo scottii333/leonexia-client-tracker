@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-const checkAuth = async () => {
+const checkAuth = async (): Promise<boolean> => {
   const cookieStore = await cookies();
   return cookieStore.get("auth")?.value === "1";
 };
 
-// GET:  Fetch companies with search, filter, and pagination
+// GET:  Fetch prospects with search, filter, and pagination
 export const GET = async (req: Request) => {
   try {
     const isAuth = await checkAuth();
@@ -19,19 +19,20 @@ export const GET = async (req: Request) => {
     const page = parseInt(searchParams.get("page") || "1", 10);
     const search = searchParams.get("search") || "";
     const industry = searchParams.get("industry") || "";
-    const status = searchParams.get("status") || "";
+    const callStatus = searchParams.get("callStatus") || "";
+    const prospectStatus = searchParams.get("prospectStatus") || "";
 
     const pageSize = 20;
     const offset = (page - 1) * pageSize;
 
     let query = supabaseAdmin
-      .from("companies")
+      .from("prospects")
       .select("*", { count: "exact" })
       .range(offset, offset + pageSize - 1);
 
     if (search) {
       query = query.or(
-        `company_name. ilike. %${search}%,client_name.ilike.%${search}%`
+        `company_name. ilike. %${search}%,contact_person.ilike.%${search}%`
       );
     }
 
@@ -39,8 +40,12 @@ export const GET = async (req: Request) => {
       query = query.eq("industry", industry);
     }
 
-    if (status) {
-      query = query.eq("status", status);
+    if (callStatus) {
+      query = query.eq("call_status", callStatus);
+    }
+
+    if (prospectStatus) {
+      query = query.eq("prospect_status", prospectStatus);
     }
 
     const { data, error, count } = await query;
@@ -63,7 +68,7 @@ export const GET = async (req: Request) => {
   }
 };
 
-// POST: Create new company
+// POST: Create new prospect
 export const POST = async (req: Request) => {
   try {
     const isAuth = await checkAuth();
@@ -74,10 +79,11 @@ export const POST = async (req: Request) => {
     const body = await req.json();
     const {
       company_name,
-      client_name,
+      contact_person,
       contact_number,
       email_address,
       industry,
+      website,
     } = body;
 
     // Validation
@@ -87,9 +93,9 @@ export const POST = async (req: Request) => {
         { status: 400 }
       );
     }
-    if (!client_name?.trim()) {
+    if (!contact_person?.trim()) {
       return NextResponse.json(
-        { error: "Client name is required" },
+        { error: "Contact person is required" },
         { status: 400 }
       );
     }
@@ -112,7 +118,7 @@ export const POST = async (req: Request) => {
       );
     }
 
-    // Validate contact number (PH format:  09XXXXXXXXX - 09 followed by 10 digits)
+    // Validate contact number (PH format:  09XXXXXXXXX)
     const phoneRegex = /^09\d{10}$/;
     if (!phoneRegex.test(contact_number)) {
       return NextResponse.json(
@@ -134,17 +140,20 @@ export const POST = async (req: Request) => {
     }
 
     const { data, error } = await supabaseAdmin
-      .from("companies")
+      .from("prospects")
       .insert([
         {
           company_name: company_name.trim(),
-          client_name: client_name.trim(),
+          contact_person: contact_person.trim(),
           contact_number: contact_number.trim(),
           email_address: email_address.trim(),
           industry: industry.trim(),
-          remarks: null,
-          to_do: null,
-          status: "Active",
+          website: website?.trim() || null,
+          called_count: 0,
+          call_status: "Not Called",
+          prospect_status: "Prospect",
+          notes: null,
+          follow_up_date: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },

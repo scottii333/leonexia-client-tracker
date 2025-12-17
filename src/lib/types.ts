@@ -1,13 +1,17 @@
-export interface Company {
+export interface Prospect {
   id: string;
   company_name: string;
-  client_name: string;
+  contact_person: string;
   contact_number: string;
   email_address: string;
   industry: string;
-  remarks: string | null;
-  to_do: string | null;
-  status: string;
+  website: string | null;
+  called_count: number;
+  last_called_at: string | null;
+  call_status: string;
+  prospect_status: string;
+  notes: string | null;
+  follow_up_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -20,7 +24,7 @@ export interface PaginationData {
 }
 
 export interface FetchResponse {
-  data: Company[];
+  data: Prospect[];
   pagination: PaginationData;
 }
 
@@ -29,14 +33,15 @@ export interface ErrorResponse {
 }
 
 export interface SuccessResponse {
-  data: Company;
+  data: Prospect;
   success: boolean;
 }
 
 export interface FormData {
   company_name: string;
-  client_name: string;
+  contact_person: string;
   contact_number: string;
   email_address: string;
   industry: string;
+  website: string;
 }

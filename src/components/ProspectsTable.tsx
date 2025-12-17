@@ -37,17 +37,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import AddCompanyDialog from "./AddCompanyDialog";
-import EditCompanyDialog from "./EditCompanyDialog";
+import AddProspectDialog from "./AddProspectDialog";
+import EditProspectDialog from "./EditProspectDialog";
 import type {
-  Company,
+  Prospect,
   PaginationData,
   FetchResponse,
   ErrorResponse,
 } from "@/lib/types";
 
-const CompaniesTable = () => {
-  const [companies, setCompanies] = useState<Company[]>([]);
+const ProspectsTable = () => {
+  const [prospects, setProspects] = useState<Prospect[]>([]);
   const [pagination, setPagination] = useState<PaginationData>({
     page: 1,
     pageSize: 20,
@@ -56,38 +56,40 @@ const CompaniesTable = () => {
   });
   const [search, setSearch] = useState<string>("");
   const [industry, setIndustry] = useState<string>("");
-  const [status, setStatus] = useState<string>("");
+  const [callStatus, setCallStatus] = useState<string>("");
+  const [prospectStatus, setProspectStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
-  const [deletingCompanyId, setDeletingCompanyId] = useState<string | null>(
+  const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
+  const [deletingProspectId, setDeletingProspectId] = useState<string | null>(
     null
   );
 
-  const fetchCompanies = async (page: number = 1): Promise<void> => {
+  const fetchProspects = async (page: number = 1): Promise<void> => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         ...(search && { search }),
         ...(industry && { industry }),
-        ...(status && { status }),
+        ...(callStatus && { callStatus }),
+        ...(prospectStatus && { prospectStatus }),
       });
 
-      const res = await fetch(`/api/companies?${params}`, {
+      const res = await fetch(`/api/prospects?${params}`, {
         method: "GET",
       });
 
       if (!res.ok) {
         const errorData: ErrorResponse = await res.json();
-        throw new Error(errorData.error || "Failed to fetch companies");
+        throw new Error(errorData.error || "Failed to fetch prospects");
       }
 
       const responseData: FetchResponse = await res.json();
-      setCompanies(responseData.data);
+      setProspects(responseData.data);
       setPagination(responseData.pagination);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Error fetching companies";
+        err instanceof Error ? err.message : "Error fetching prospects";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -95,32 +97,32 @@ const CompaniesTable = () => {
   };
 
   useEffect(() => {
-    fetchCompanies(1);
-  }, [search, industry, status]);
+    fetchProspects(1);
+  }, [search, industry, callStatus, prospectStatus]);
 
   const handleDelete = async (id: string): Promise<void> => {
     try {
-      const res = await fetch(`/api/companies/${id}`, {
+      const res = await fetch(`/api/prospects/${id}`, {
         method: "DELETE",
       });
 
       if (!res.ok) {
         const errorData: ErrorResponse = await res.json();
-        throw new Error(errorData.error || "Failed to delete company");
+        throw new Error(errorData.error || "Failed to delete prospect");
       }
 
-      toast.success("Company deleted successfully");
-      setDeletingCompanyId(null);
-      fetchCompanies(pagination.page);
+      toast.success("Prospect deleted successfully");
+      setDeletingProspectId(null);
+      fetchProspects(pagination.page);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Error deleting company";
+        err instanceof Error ? err.message : "Error deleting prospect";
       toast.error(errorMessage);
     }
   };
 
   const handleRefresh = (): void => {
-    fetchCompanies(pagination.page);
+    fetchProspects(pagination.page);
   };
 
   const industries = [
@@ -136,16 +138,50 @@ const CompaniesTable = () => {
     "Other",
   ];
 
-  const statuses = ["Active", "Inactive", "Pending"];
+  const callStatuses = [
+    "Not Called",
+    "Called",
+    "No Answer",
+    "Interested",
+    "Not Interested",
+  ];
+  const prospectStatuses = [
+    "Prospect",
+    "Declined",
+    "Not Sure",
+    "Secured Client",
+    "Ongoing Client",
+  ];
 
-  const getStatusColor = (status: string): string => {
+  const getCallStatusColor = (status: string): string => {
     switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800";
-      case "Inactive":
-        return "bg-red-100 text-red-800";
-      case "Pending":
+      case "Not Called":
+        return "bg-gray-100 text-gray-800";
+      case "Called":
+        return "bg-blue-100 text-blue-800";
+      case "No Answer":
         return "bg-yellow-100 text-yellow-800";
+      case "Interested":
+        return "bg-green-100 text-green-800";
+      case "Not Interested":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getProspectStatusColor = (status: string): string => {
+    switch (status) {
+      case "Prospect":
+        return "bg-purple-100 text-purple-800";
+      case "Declined":
+        return "bg-red-100 text-red-800";
+      case "Not Sure":
+        return "bg-orange-100 text-orange-800";
+      case "Secured Client":
+        return "bg-green-100 text-green-800";
+      case "Ongoing Client":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -153,12 +189,12 @@ const CompaniesTable = () => {
 
   return (
     <div className="space-y-6">
-      <AddCompanyDialog onSuccess={() => fetchCompanies(1)} />
+      <AddProspectDialog onSuccess={() => fetchProspects(1)} />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
         <div>
           <Label htmlFor="search" className="text-sm">
-            Search by Company or Client Name
+            Search Company or Contact
           </Label>
           <Input
             id="search"
@@ -171,7 +207,7 @@ const CompaniesTable = () => {
 
         <div>
           <Label htmlFor="industry" className="text-sm">
-            Filter by Industry
+            Industry
           </Label>
           <Select value={industry} onValueChange={setIndustry}>
             <SelectTrigger id="industry">
@@ -188,17 +224,35 @@ const CompaniesTable = () => {
         </div>
 
         <div>
-          <Label htmlFor="status" className="text-sm">
-            Filter by Status
+          <Label htmlFor="callStatus" className="text-sm">
+            Call Status
           </Label>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger id="status">
-              <SelectValue placeholder="All Statuses" />
+          <Select value={callStatus} onValueChange={setCallStatus}>
+            <SelectTrigger id="callStatus">
+              <SelectValue placeholder="All Call Status" />
             </SelectTrigger>
             <SelectContent>
-              {statuses.map((stat) => (
-                <SelectItem key={stat} value={stat}>
-                  {stat}
+              {callStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="prospectStatus" className="text-sm">
+            Prospect Status
+          </Label>
+          <Select value={prospectStatus} onValueChange={setProspectStatus}>
+            <SelectTrigger id="prospectStatus">
+              <SelectValue placeholder="All Prospect Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {prospectStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -220,66 +274,82 @@ const CompaniesTable = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-100">
-              <TableHead className="font-semibold">Company Name</TableHead>
-              <TableHead className="font-semibold">Client Name</TableHead>
-              <TableHead className="font-semibold">Contact</TableHead>
+              <TableHead className="font-semibold">Company</TableHead>
+              <TableHead className="font-semibold">Contact Person</TableHead>
+              <TableHead className="font-semibold">Phone</TableHead>
               <TableHead className="font-semibold">Email</TableHead>
               <TableHead className="font-semibold">Industry</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Created</TableHead>
+              <TableHead className="font-semibold">Call Status</TableHead>
+              <TableHead className="font-semibold">Prospect Status</TableHead>
+              <TableHead className="font-semibold">Called</TableHead>
+              <TableHead className="font-semibold">Last Called</TableHead>
               <TableHead className="font-semibold text-right">
                 Actions
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companies.length === 0 ? (
+            {prospects.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={10}
                   className="text-center py-8 text-gray-500"
                 >
-                  No companies found
+                  No prospects found
                 </TableCell>
               </TableRow>
             ) : (
-              companies.map((company) => (
-                <TableRow key={company.id} className="hover:bg-gray-50">
+              prospects.map((prospect) => (
+                <TableRow key={prospect.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium">
-                    {company.company_name}
+                    {prospect.company_name}
                   </TableCell>
-                  <TableCell>{company.client_name}</TableCell>
+                  <TableCell>{prospect.contact_person}</TableCell>
                   <TableCell className="text-sm">
-                    {company.contact_number}
+                    {prospect.contact_number}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {company.email_address}
+                    {prospect.email_address}
                   </TableCell>
-                  <TableCell className="text-sm">{company.industry}</TableCell>
+                  <TableCell className="text-sm">{prospect.industry}</TableCell>
                   <TableCell>
                     <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        company.status
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${getCallStatusColor(
+                        prospect.call_status
                       )}`}
                     >
-                      {company.status}
+                      {prospect.call_status}
                     </span>
                   </TableCell>
+                  <TableCell>
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${getProspectStatusColor(
+                        prospect.prospect_status
+                      )}`}
+                    >
+                      {prospect.prospect_status}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center font-semibold">
+                    {prospect.called_count}
+                  </TableCell>
                   <TableCell className="text-xs text-gray-500">
-                    {new Date(company.created_at).toLocaleDateString()}
+                    {prospect.last_called_at
+                      ? new Date(prospect.last_called_at).toLocaleDateString()
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setEditingCompany(company)}
+                      onClick={() => setEditingProspect(prospect)}
                     >
                       Edit
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => setDeletingCompanyId(company.id)}
+                      onClick={() => setDeletingProspectId(prospect.id)}
                     >
                       Delete
                     </Button>
@@ -298,7 +368,7 @@ const CompaniesTable = () => {
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() =>
-                    pagination.page > 1 && fetchCompanies(pagination.page - 1)
+                    pagination.page > 1 && fetchProspects(pagination.page - 1)
                   }
                   className={
                     pagination.page === 1
@@ -314,7 +384,7 @@ const CompaniesTable = () => {
               ).map((pageNum) => (
                 <PaginationItem key={pageNum}>
                   <PaginationLink
-                    onClick={() => fetchCompanies(pageNum)}
+                    onClick={() => fetchProspects(pageNum)}
                     isActive={pagination.page === pageNum}
                     className="cursor-pointer"
                   >
@@ -327,7 +397,7 @@ const CompaniesTable = () => {
                 <PaginationNext
                   onClick={() =>
                     pagination.page < pagination.totalPages &&
-                    fetchCompanies(pagination.page + 1)
+                    fetchProspects(pagination.page + 1)
                   }
                   className={
                     pagination.page === pagination.totalPages
@@ -341,29 +411,29 @@ const CompaniesTable = () => {
         </div>
       )}
 
-      {editingCompany && (
-        <EditCompanyDialog
-          company={editingCompany}
-          onClose={() => setEditingCompany(null)}
+      {editingProspect && (
+        <EditProspectDialog
+          prospect={editingProspect}
+          onClose={() => setEditingProspect(null)}
           onSuccess={() => {
-            setEditingCompany(null);
-            fetchCompanies(pagination.page);
+            setEditingProspect(null);
+            fetchProspects(pagination.page);
           }}
         />
       )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog
-        open={deletingCompanyId !== null}
+        open={deletingProspectId !== null}
         onOpenChange={(open) => {
-          if (!open) setDeletingCompanyId(null);
+          if (!open) setDeletingProspectId(null);
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Company</AlertDialogTitle>
+            <AlertDialogTitle>Delete Prospect</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this company? This action cannot
+              Are you sure you want to delete this prospect? This action cannot
               be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -371,8 +441,8 @@ const CompaniesTable = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (deletingCompanyId) {
-                  handleDelete(deletingCompanyId);
+                if (deletingProspectId) {
+                  handleDelete(deletingProspectId);
                 }
               }}
               className="bg-red-600 hover:bg-red-700"
@@ -386,4 +456,4 @@ const CompaniesTable = () => {
   );
 };
 
-export default CompaniesTable;
+export default ProspectsTable;

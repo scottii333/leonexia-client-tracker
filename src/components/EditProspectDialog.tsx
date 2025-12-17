@@ -20,21 +20,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { Company, SuccessResponse, ErrorResponse } from "@/lib/types";
+import type { Prospect, SuccessResponse, ErrorResponse } from "@/lib/types";
 
-interface EditCompanyDialogProps {
-  company: Company;
+interface EditProspectDialogProps {
+  prospect: Prospect;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
-  company,
+const EditProspectDialog: React.FC<EditProspectDialogProps> = ({
+  prospect,
   onClose,
   onSuccess,
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [formData, setFormData] = useState<Company>(company);
+  const [formData, setFormData] = useState<Prospect>(prospect);
 
   const industries = [
     "Technology",
@@ -49,15 +49,26 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
     "Other",
   ];
 
-  const statuses = ["Active", "Inactive", "Pending"];
+  const callStatuses = [
+    "Not Called",
+    "Called",
+    "No Answer",
+    "Interested",
+    "Not Interested",
+  ];
+  const prospectStatuses = [
+    "Prospect",
+    "Declined",
+    "Not Sure",
+    "Secured Client",
+    "Ongoing Client",
+  ];
 
   const handleContactNumberChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ): void => {
     const value = e.target.value;
-    // Only allow digits
     const digitsOnly = value.replace(/\D/g, "");
-    // Limit to 12 digits (09 + 10 digits)
     const limited = digitsOnly.slice(0, 12);
     setFormData({ ...formData, contact_number: limited });
   };
@@ -69,7 +80,7 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
     setIsLoading(true);
 
     try {
-      const res = await fetch(`/api/companies/${company.id}`, {
+      const res = await fetch(`/api/prospects/${prospect.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -79,14 +90,14 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
 
       if (!res.ok) {
         const errorData = data as ErrorResponse;
-        throw new Error(errorData.error || "Failed to update company");
+        throw new Error(errorData.error || "Failed to update prospect");
       }
 
-      toast.success("Company updated successfully");
+      toast.success("Prospect updated successfully");
       onSuccess();
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Error updating company";
+        err instanceof Error ? err.message : "Error updating prospect";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -97,9 +108,9 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Company</DialogTitle>
+          <DialogTitle>Edit Prospect</DialogTitle>
           <DialogDescription>
-            Update company information. All fields marked with * are required.
+            Update prospect information. Fields marked with * are required.
           </DialogDescription>
         </DialogHeader>
 
@@ -120,14 +131,14 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="client_name">
-              Client Name <span className="text-red-500">*</span>
+            <Label htmlFor="contact_person">
+              Contact Person <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="client_name"
-              value={formData.client_name}
+              id="contact_person"
+              value={formData.contact_person}
               onChange={(e) =>
-                setFormData({ ...formData, client_name: e.target.value })
+                setFormData({ ...formData, contact_person: e.target.value })
               }
               disabled={isLoading}
               required
@@ -146,9 +157,7 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
               required
               maxLength={12}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Format: 09XXXXXXXXX (09 followed by 10 digits)
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Format: 09XXXXXXXXX</p>
           </div>
 
           <div>
@@ -192,21 +201,33 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              value={formData.website ?? ""}
+              onChange={(e) =>
+                setFormData({ ...formData, website: e.target.value || null })
+              }
+              disabled={isLoading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="call_status">Call Status</Label>
             <Select
-              value={formData.status}
+              value={formData.call_status}
               onValueChange={(value) =>
-                setFormData({ ...formData, status: value })
+                setFormData({ ...formData, call_status: value })
               }
               disabled={isLoading}
             >
-              <SelectTrigger id="status">
+              <SelectTrigger id="call_status">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {statuses.map((stat) => (
-                  <SelectItem key={stat} value={stat}>
-                    {stat}
+                {callStatuses.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -214,13 +235,35 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="remarks">Remarks</Label>
+            <Label htmlFor="prospect_status">Prospect Status</Label>
+            <Select
+              value={formData.prospect_status}
+              onValueChange={(value) =>
+                setFormData({ ...formData, prospect_status: value })
+              }
+              disabled={isLoading}
+            >
+              <SelectTrigger id="prospect_status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {prospectStatuses.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea
-              id="remarks"
-              placeholder="Add any remarks (optional)"
-              value={formData.remarks ?? ""}
+              id="notes"
+              placeholder="Add call notes or follow-up information"
+              value={formData.notes ?? ""}
               onChange={(e) =>
-                setFormData({ ...formData, remarks: e.target.value || null })
+                setFormData({ ...formData, notes: e.target.value || null })
               }
               disabled={isLoading}
               rows={3}
@@ -228,22 +271,42 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="to_do">To Do</Label>
-            <Textarea
-              id="to_do"
-              placeholder="Add tasks or notes (optional)"
-              value={formData.to_do ?? ""}
+            <Label htmlFor="follow_up_date">Follow-up Date</Label>
+            <Input
+              id="follow_up_date"
+              type="date"
+              value={
+                formData.follow_up_date
+                  ? formData.follow_up_date.split("T")[0]
+                  : ""
+              }
               onChange={(e) =>
-                setFormData({ ...formData, to_do: e.target.value || null })
+                setFormData({
+                  ...formData,
+                  follow_up_date: e.target.value
+                    ? new Date(e.target.value).toISOString()
+                    : null,
+                })
               }
               disabled={isLoading}
-              rows={3}
             />
+          </div>
+
+          <div className="bg-gray-100 p-3 rounded-md text-sm">
+            <p>
+              <strong>Called Count:</strong> {formData.called_count}
+            </p>
+            <p>
+              <strong>Last Called:</strong>{" "}
+              {formData.last_called_at
+                ? new Date(formData.last_called_at).toLocaleDateString()
+                : "Never"}
+            </p>
           </div>
 
           <div className="flex gap-2 pt-4">
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Updating..." : "Update Company"}
+              {isLoading ? "Updating..." : "Update Prospect"}
             </Button>
             <Button
               type="button"
@@ -261,4 +324,4 @@ const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
   );
 };
 
-export default EditCompanyDialog;
+export default EditProspectDialog;

@@ -22,19 +22,20 @@ import {
 import { toast } from "sonner";
 import type { FormData, SuccessResponse, ErrorResponse } from "@/lib/types";
 
-interface AddCompanyDialogProps {
+interface AddProspectDialogProps {
   onSuccess: () => void;
 }
 
-const AddCompanyDialog: React.FC<AddCompanyDialogProps> = ({ onSuccess }) => {
+const AddProspectDialog: React.FC<AddProspectDialogProps> = ({ onSuccess }) => {
   const [open, setOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState<FormData>({
     company_name: "",
-    client_name: "",
+    contact_person: "",
     contact_number: "",
     email_address: "",
     industry: "",
+    website: "",
   });
 
   const industries = [
@@ -54,9 +55,7 @@ const AddCompanyDialog: React.FC<AddCompanyDialogProps> = ({ onSuccess }) => {
     e: React.ChangeEvent<HTMLInputElement>
   ): void => {
     const value = e.target.value;
-    // Only allow digits
     const digitsOnly = value.replace(/\D/g, "");
-    // Limit to 12 digits (09 + 10 digits)
     const limited = digitsOnly.slice(0, 12);
     setFormData({ ...formData, contact_number: limited });
   };
@@ -68,7 +67,7 @@ const AddCompanyDialog: React.FC<AddCompanyDialogProps> = ({ onSuccess }) => {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/companies", {
+      const res = await fetch("/api/prospects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -78,22 +77,23 @@ const AddCompanyDialog: React.FC<AddCompanyDialogProps> = ({ onSuccess }) => {
 
       if (!res.ok) {
         const errorData = data as ErrorResponse;
-        throw new Error(errorData.error || "Failed to add company");
+        throw new Error(errorData.error || "Failed to add prospect");
       }
 
-      toast.success("Company added successfully");
+      toast.success("Prospect added successfully");
       setFormData({
         company_name: "",
-        client_name: "",
+        contact_person: "",
         contact_number: "",
         email_address: "",
         industry: "",
+        website: "",
       });
       setOpen(false);
       onSuccess();
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Error adding company";
+        err instanceof Error ? err.message : "Error adding prospect";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -103,13 +103,13 @@ const AddCompanyDialog: React.FC<AddCompanyDialogProps> = ({ onSuccess }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full md:w-auto">+ Add New Company</Button>
+        <Button className="w-full md:w-auto">+ Add New Prospect</Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add New Company</DialogTitle>
+          <DialogTitle>Add New Prospect</DialogTitle>
           <DialogDescription>
-            Fill in the company details below. All fields marked with * are
+            Add a new prospect for cold calling. Fields marked with * are
             required.
           </DialogDescription>
         </DialogHeader>
@@ -132,15 +132,15 @@ const AddCompanyDialog: React.FC<AddCompanyDialogProps> = ({ onSuccess }) => {
           </div>
 
           <div>
-            <Label htmlFor="client_name">
-              Client Name <span className="text-red-500">*</span>
+            <Label htmlFor="contact_person">
+              Contact Person <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="client_name"
-              placeholder="Enter client name"
-              value={formData.client_name}
+              id="contact_person"
+              placeholder="Enter contact person name"
+              value={formData.contact_person}
               onChange={(e) =>
-                setFormData({ ...formData, client_name: e.target.value })
+                setFormData({ ...formData, contact_person: e.target.value })
               }
               disabled={isLoading}
               required
@@ -206,9 +206,22 @@ const AddCompanyDialog: React.FC<AddCompanyDialogProps> = ({ onSuccess }) => {
             </Select>
           </div>
 
+          <div>
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              placeholder="https://example.com (optional)"
+              value={formData.website}
+              onChange={(e) =>
+                setFormData({ ...formData, website: e.target.value })
+              }
+              disabled={isLoading}
+            />
+          </div>
+
           <div className="flex gap-2 pt-4">
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Adding..." : "Add Company"}
+              {isLoading ? "Adding..." : "Add Prospect"}
             </Button>
             <Button
               type="button"
@@ -226,4 +239,4 @@ const AddCompanyDialog: React.FC<AddCompanyDialogProps> = ({ onSuccess }) => {
   );
 };
 
-export default AddCompanyDialog;
+export default AddProspectDialog;

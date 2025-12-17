@@ -7,7 +7,7 @@ const checkAuth = async (): Promise<boolean> => {
   return cookieStore.get("auth")?.value === "1";
 };
 
-// PUT:  Update company
+// PUT: Update prospect
 export const PUT = async (
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -18,18 +18,19 @@ export const PUT = async (
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Await params here!
     const { id } = await params;
     const body = await req.json();
     const {
       company_name,
-      client_name,
+      contact_person,
       contact_number,
       email_address,
       industry,
-      remarks,
-      to_do,
-      status,
+      website,
+      call_status,
+      prospect_status,
+      notes,
+      follow_up_date,
     } = body;
 
     // Validation
@@ -39,9 +40,9 @@ export const PUT = async (
         { status: 400 }
       );
     }
-    if (!client_name?.trim()) {
+    if (!contact_person?.trim()) {
       return NextResponse.json(
-        { error: "Client name is required" },
+        { error: "Contact person is required" },
         { status: 400 }
       );
     }
@@ -64,7 +65,7 @@ export const PUT = async (
       );
     }
 
-    // Validate contact number (PH format:  09XXXXXXXXX)
+    // Validate contact number
     const phoneRegex = /^09\d{10}$/;
     if (!phoneRegex.test(contact_number)) {
       return NextResponse.json(
@@ -85,17 +86,29 @@ export const PUT = async (
       );
     }
 
+    const updatedCalledCount =
+      call_status === "Called"
+        ? (body.called_count || 0) + 1
+        : body.called_count || 0;
+
     const { data, error } = await supabaseAdmin
-      .from("companies")
+      .from("prospects")
       .update({
         company_name: company_name.trim(),
-        client_name: client_name.trim(),
+        contact_person: contact_person.trim(),
         contact_number: contact_number.trim(),
         email_address: email_address.trim(),
         industry: industry.trim(),
-        remarks: remarks?.trim() || null,
-        to_do: to_do?.trim() || null,
-        status: status || "Active",
+        website: website?.trim() || null,
+        call_status: call_status || "Not Called",
+        prospect_status: prospect_status || "Prospect",
+        called_count: updatedCalledCount,
+        last_called_at:
+          call_status === "Called"
+            ? new Date().toISOString()
+            : body.last_called_at,
+        notes: notes?.trim() || null,
+        follow_up_date: follow_up_date || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -114,7 +127,7 @@ export const PUT = async (
   }
 };
 
-// DELETE: Delete company
+// DELETE: Delete prospect
 export const DELETE = async (
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -125,11 +138,10 @@ export const DELETE = async (
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Await params here!
     const { id } = await params;
 
     const { error } = await supabaseAdmin
-      .from("companies")
+      .from("prospects")
       .delete()
       .eq("id", id);
 
