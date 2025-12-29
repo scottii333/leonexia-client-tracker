@@ -359,7 +359,7 @@ export const ProspectTable: React.FC = () => {
               <SelectTrigger className="h-11 w-full rounded-xl border border-[#355E34]">
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl h-70 overflow-y-auto">
+              <SelectContent className="rounded-xl h-auto overflow-y-auto">
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="Declined">Declined</SelectItem>
                 <SelectItem value="Interested">Interested</SelectItem>
@@ -401,7 +401,7 @@ export const ProspectTable: React.FC = () => {
               <SelectTrigger className="h-11 w-full rounded-xl border border-[#355E34]">
                 <SelectValue placeholder="Select Call Status" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl h-70 overflow-y-auto">
+              <SelectContent className="rounded-xl h-auto overflow-y-auto">
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="Called">Called</SelectItem>
                 <SelectItem value="No Answer">No Answer</SelectItem>
@@ -701,7 +701,7 @@ export const ProspectTable: React.FC = () => {
                   <SelectTrigger className="h-11 w-full rounded-xl border border-[#355E34]">
                     <SelectValue placeholder="Select Call Status" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl h-70 overflow-y-auto">
+                  <SelectContent className="rounded-xl h-auto overflow-y-auto">
                     <SelectItem value="Called">Called</SelectItem>
                     <SelectItem value="No Answer">No Answer</SelectItem>
                     <SelectItem value="Not Called">Not Called</SelectItem>
@@ -723,7 +723,7 @@ export const ProspectTable: React.FC = () => {
                   <SelectTrigger className="h-11 w-full rounded-xl border border-[#355E34]">
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl h-70 overflow-y-auto">
+                  <SelectContent className="rounded-xl h-auto overflow-y-auto">
                     <SelectItem value="Declined">Declined</SelectItem>
                     <SelectItem value="Interested">Interested</SelectItem>
                     <SelectItem value="Secured">Secured</SelectItem>
