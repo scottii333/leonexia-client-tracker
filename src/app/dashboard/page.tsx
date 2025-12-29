@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import LogoutButton from "@/components/LogoutButton";
-import ProspectsTable from "@/components/ProspectsTable";
+import { Header } from "@/components/Header";
+import { ProspectTable } from "@/components/ProspectTable";
+import { AddProspectsDialog } from "@/components/AddProspectDialog";
 
 const DashboardPage = async () => {
   const cookieStore = await cookies();
@@ -12,19 +13,15 @@ const DashboardPage = async () => {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-10">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-4xl font-bold">Cold Call Tracker</h1>
-          <p className="text-gray-600 mt-1">
-            Track and manage your sales prospects
-          </p>
-        </div>
-        <LogoutButton />
+    <section className="min-h-[200vh] flex flex-col gap-5   ">
+      <Header />
+      <div className="p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 w-full">
+        <h1 className="text-4xl font-medium">Cold Call Tracker </h1>
+        <AddProspectsDialog />
       </div>
 
-      <ProspectsTable />
-    </div>
+      <ProspectTable />
+    </section>
   );
 };
 
