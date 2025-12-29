@@ -7,7 +7,19 @@ const checkAuth = async (): Promise<boolean> => {
   return cookieStore.get("auth")?.value === "1";
 };
 
-// PUT: Update prospect
+interface UpdatePayloadServer {
+  company_name: string;
+  contact_person: string;
+  contact_number: string;
+  email_address?: string | null;
+  industry: string;
+  call_status?: string;
+  status?: string;
+  remark?: string | null;
+  date_updated: string;
+  date_added?: string | null;
+}
+
 export const PUT = async (
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -18,22 +30,23 @@ export const PUT = async (
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // unwrap params promise
     const { id } = await params;
     const body = await req.json();
+
     const {
       company_name,
       contact_person,
       contact_number,
       email_address,
       industry,
-      website,
       call_status,
-      prospect_status,
-      notes,
-      follow_up_date,
-    } = body;
+      status,
+      remark,
+      date_added,
+    } = body as Partial<UpdatePayloadServer>;
 
-    // Validation
+    // Basic Validation
     if (!company_name?.trim()) {
       return NextResponse.json(
         { error: "Company name is required" },
@@ -52,12 +65,6 @@ export const PUT = async (
         { status: 400 }
       );
     }
-    if (!email_address?.trim()) {
-      return NextResponse.json(
-        { error: "Email address is required" },
-        { status: 400 }
-      );
-    }
     if (!industry?.trim()) {
       return NextResponse.json(
         { error: "Industry is required" },
@@ -65,52 +72,75 @@ export const PUT = async (
       );
     }
 
-    // Validate contact number
-    const phoneRegex = /^09\d{10}$/;
+    // Validate PH contact number (09 + 9 digits)
+    const phoneRegex = /^09\d{9}$/;
     if (!phoneRegex.test(contact_number)) {
       return NextResponse.json(
         {
           error:
-            "Contact number must be 09 followed by 10 digits (e.g., 09918121869)",
+            "Contact number must be 09 followed by 9 digits (e.g., 09123456789)",
         },
         { status: 400 }
       );
     }
 
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email_address)) {
+    if (email_address) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email_address)) {
+        return NextResponse.json(
+          { error: "Invalid email address" },
+          { status: 400 }
+        );
+      }
+    }
+
+    const now = new Date().toISOString();
+    const normalizedCompany = company_name!.trim();
+
+    // Check for duplicate company name (case-insensitive) excluding current record
+    const { data: existing, error: existingError } = await supabaseAdmin
+      .from("prospects")
+      .select("id")
+      .ilike("company_name", normalizedCompany) // case-insensitive match
+      .neq("id", id)
+      .limit(1);
+
+    if (existingError) {
+      console.error("Error checking existing company:", existingError);
       return NextResponse.json(
-        { error: "Invalid email address" },
-        { status: 400 }
+        { error: "Error checking existing company" },
+        { status: 500 }
       );
     }
 
-    const updatedCalledCount =
-      call_status === "Called"
-        ? (body.called_count || 0) + 1
-        : body.called_count || 0;
+    if (Array.isArray(existing) && existing.length > 0) {
+      return NextResponse.json(
+        { error: "A prospect with this company name already exists" },
+        { status: 409 }
+      );
+    }
+
+    const updatePayload: Partial<UpdatePayloadServer> = {
+      company_name: normalizedCompany,
+      contact_person: contact_person!.trim(),
+      contact_number: contact_number!.trim(),
+      email_address: email_address?.trim() ?? null,
+      // store industry as lowercase
+      industry: industry!.trim().toLowerCase(),
+      call_status: call_status ?? "Not Called",
+      status: status ?? "Prospect",
+      remark: remark ?? "",
+      date_updated: now,
+    };
+
+    // If date_added present, update it (must be YYYY-MM-DD)
+    if (date_added) {
+      updatePayload.date_added = date_added;
+    }
 
     const { data, error } = await supabaseAdmin
       .from("prospects")
-      .update({
-        company_name: company_name.trim(),
-        contact_person: contact_person.trim(),
-        contact_number: contact_number.trim(),
-        email_address: email_address.trim(),
-        industry: industry.trim(),
-        website: website?.trim() || null,
-        call_status: call_status || "Not Called",
-        prospect_status: prospect_status || "Prospect",
-        called_count: updatedCalledCount,
-        last_called_at:
-          call_status === "Called"
-            ? new Date().toISOString()
-            : body.last_called_at,
-        notes: notes?.trim() || null,
-        follow_up_date: follow_up_date || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", id)
       .select();
 
@@ -120,37 +150,7 @@ export const PUT = async (
 
     return NextResponse.json({ data: data?.[0], success: true });
   } catch (err) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-};
-
-// DELETE: Delete prospect
-export const DELETE = async (
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) => {
-  try {
-    const isAuth = await checkAuth();
-    if (!isAuth) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { id } = await params;
-
-    const { error } = await supabaseAdmin
-      .from("prospects")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
+    console.error("PUT /prospects/[id] error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
