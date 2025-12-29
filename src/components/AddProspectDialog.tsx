@@ -157,7 +157,7 @@ export const AddProspectsDialog: React.FC = () => {
                 </Button>
               </DialogClose>
               <Button type="submit" className="bg-[#355E34] h-11 rounded-xl">
-                Save Prospects
+                Save Prospect
               </Button>
             </DialogFooter>
           </DialogContent>
