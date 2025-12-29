@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -19,224 +21,148 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
-import type { FormData, SuccessResponse, ErrorResponse } from "@/lib/types";
 
-interface AddProspectDialogProps {
-  onSuccess: () => void;
-}
-
-const AddProspectDialog: React.FC<AddProspectDialogProps> = ({ onSuccess }) => {
-  const [open, setOpen] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [formData, setFormData] = useState<FormData>({
-    company_name: "",
-    contact_person: "",
-    contact_number: "",
-    email_address: "",
-    industry: "",
-    website: "",
-  });
-
-  const industries = [
-    "Technology",
-    "Healthcare",
-    "Finance",
-    "Retail",
-    "Manufacturing",
-    "Education",
-    "Hospitality",
-    "Real Estate",
-    "Energy",
-    "Other",
-  ];
-
-  const handleContactNumberChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    const value = e.target.value;
-    const digitsOnly = value.replace(/\D/g, "");
-    const limited = digitsOnly.slice(0, 12);
-    setFormData({ ...formData, contact_number: limited });
-  };
-
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const res = await fetch("/api/prospects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data: SuccessResponse | ErrorResponse = await res.json();
-
-      if (!res.ok) {
-        const errorData = data as ErrorResponse;
-        throw new Error(errorData.error || "Failed to add prospect");
-      }
-
-      toast.success("Prospect added successfully");
-      setFormData({
-        company_name: "",
-        contact_person: "",
-        contact_number: "",
-        email_address: "",
-        industry: "",
-        website: "",
-      });
-      setOpen(false);
-      onSuccess();
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error adding prospect";
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+export const AddProspectsDialog: React.FC = () => {
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full md:w-auto">+ Add New Prospect</Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Add New Prospect</DialogTitle>
-          <DialogDescription>
-            Add a new prospect for cold calling. Fields marked with * are
-            required.
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="company_name">
-              Company Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="company_name"
-              placeholder="Enter company name"
-              value={formData.company_name}
-              onChange={(e) =>
-                setFormData({ ...formData, company_name: e.target.value })
-              }
-              disabled={isLoading}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="contact_person">
-              Contact Person <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="contact_person"
-              placeholder="Enter contact person name"
-              value={formData.contact_person}
-              onChange={(e) =>
-                setFormData({ ...formData, contact_person: e.target.value })
-              }
-              disabled={isLoading}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="contact_number">
-              Contact Number <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="contact_number"
-              placeholder="09918121869"
-              value={formData.contact_number}
-              onChange={handleContactNumberChange}
-              disabled={isLoading}
-              required
-              maxLength={12}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Format: 09XXXXXXXXX (09 followed by 10 digits)
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="email_address">
-              Email Address <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="email_address"
-              type="email"
-              placeholder="Enter email address"
-              value={formData.email_address}
-              onChange={(e) =>
-                setFormData({ ...formData, email_address: e.target.value })
-              }
-              disabled={isLoading}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="industry">
-              Industry <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.industry}
-              onValueChange={(value) =>
-                setFormData({ ...formData, industry: value })
-              }
-              disabled={isLoading}
-            >
-              <SelectTrigger id="industry">
-                <SelectValue placeholder="Select an industry" />
-              </SelectTrigger>
-              <SelectContent>
-                {industries.map((ind) => (
-                  <SelectItem key={ind} value={ind}>
-                    {ind}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="website">Website</Label>
-            <Input
-              id="website"
-              placeholder="https://example.com (optional)"
-              value={formData.website}
-              onChange={(e) =>
-                setFormData({ ...formData, website: e.target.value })
-              }
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Adding..." : "Add Prospect"}
+    <section className="flex justify-center ">
+      <Dialog>
+        <form className="w-full max-w-2xl">
+          <DialogTrigger asChild>
+            <Button className="bg-[#355E34] w-full h-11 rounded-xl hover:bg-[#2c4c2b] transition-all duration-200 shadow-sm hover:shadow-md">
+              + Add New Prospect
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-          </div>
+          </DialogTrigger>
+
+          {/* overflow-visible so dropdown can render below the dialog content */}
+          <DialogContent className="sm:max-w-2xl w-full p-6 overflow-visible">
+            <DialogHeader>
+              <DialogTitle>Add Prospect</DialogTitle>
+              <DialogDescription>
+                Fill in the details below to add a new prospect.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-4 flex flex-col gap-6">
+              {/* Row: Company Name + Industry (mobile stacked, sm:grid-cols-3 for larger screens) */}
+              <div className="flex flex-col gap-6 sm:grid sm:grid-cols-3 sm:gap-6">
+                <div className="sm:col-span-2 flex flex-col gap-2">
+                  <Label
+                    htmlFor="company_name"
+                    className="text-sm text-gray-700"
+                  >
+                    Company Name
+                  </Label>
+                  <Input
+                    id="company_name"
+                    name="company_name"
+                    placeholder="Acme Corporation"
+                    className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="industry" className="text-sm text-gray-700">
+                    Industry
+                  </Label>
+                  <Select name="industry">
+                    <SelectTrigger
+                      id="industry"
+                      className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 flex items-center justify-between focus-visible:ring-[#355E34] focus-visible:ring-2"
+                    >
+                      <SelectValue placeholder="Select industry" />
+                    </SelectTrigger>
+
+                    <SelectContent className="rounded-xl h-70 overflow-y-auto">
+                      <SelectItem value="law">Law Firm</SelectItem>
+                      <SelectItem value="construction">Construction</SelectItem>
+                      <SelectItem value="food">Food</SelectItem>
+                      <SelectItem value="car">Car / Automotive</SelectItem>
+                      <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="school">School / Education</SelectItem>
+                      <SelectItem value="travel">Travel / Tourism</SelectItem>
+                      <SelectItem value="cafe">Cafe / Restaurant</SelectItem>
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
+                      <SelectItem value="government">Government</SelectItem>
+                      <SelectItem value="restaurant">Restaurant</SelectItem>
+                      <SelectItem value="resort">
+                        Resort / Hospitality
+                      </SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="retail">Retail</SelectItem>
+                      <SelectItem value="manufacturing">
+                        Manufacturing
+                      </SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Row: Contact Person + Contact Number (mobile stacked, sm:grid-cols-2 for larger screens) */}
+              <div className="flex flex-col gap-6 sm:grid sm:grid-cols-2 sm:gap-6">
+                <div className="flex flex-col gap-2">
+                  <Label
+                    htmlFor="contact_person"
+                    className="text-sm text-gray-700"
+                  >
+                    Contact Person
+                  </Label>
+                  <Input
+                    id="contact_person"
+                    name="contact_person"
+                    placeholder="Jane Doe"
+                    className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label
+                    htmlFor="contact_number"
+                    className="text-sm text-gray-700"
+                  >
+                    Contact Number
+                  </Label>
+                  <Input
+                    id="contact_number"
+                    name="contact_number"
+                    placeholder="09xxxxxxxxx"
+                    className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
+                  />
+                </div>
+              </div>
+
+              {/* Email Address */}
+              <div className="flex flex-col gap-2">
+                <Label
+                  htmlFor="email_address"
+                  className="text-sm text-gray-700"
+                >
+                  Email Address
+                </Label>
+                <Input
+                  id="email_address"
+                  name="email_address"
+                  type="email"
+                  placeholder="jane@acme.com"
+                  className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-4">
+              <DialogClose asChild>
+                <Button variant="outline" className="h-11 rounded-xl">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" className="bg-[#355E34] h-11 rounded-xl">
+                Save Prospect
+              </Button>
+            </DialogFooter>
+          </DialogContent>
         </form>
-      </DialogContent>
-    </Dialog>
+      </Dialog>
+    </section>
   );
 };
-
-export default AddProspectDialog;
