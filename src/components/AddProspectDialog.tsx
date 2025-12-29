@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "./ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -144,135 +145,138 @@ export const AddProspectsDialog: React.FC = () => {
         </DialogTrigger>
 
         <DialogContent className="sm:max-w-2xl w-full p-6 overflow-visible">
-          <form onSubmit={handleSubmit} className="w-full">
-            <DialogHeader>
-              <DialogTitle>Add Prospect</DialogTitle>
-              <DialogDescription>
-                Fill in the details below to add a new prospect.
-              </DialogDescription>
-            </DialogHeader>
+          <ScrollArea className="max-h-100 pr-4">
+            {" "}
+            <form onSubmit={handleSubmit} className="w-full">
+              <DialogHeader>
+                <DialogTitle>Add Prospect</DialogTitle>
+                <DialogDescription>
+                  Fill in the details below to add a new prospect.
+                </DialogDescription>
+              </DialogHeader>
 
-            <div className="mt-4 flex flex-col gap-6">
-              {/* Company Name + Industry */}
-              <div className="flex flex-col gap-6 sm:grid sm:grid-cols-3 sm:gap-6">
-                <div className="sm:col-span-2 flex flex-col gap-2">
-                  <Label
-                    htmlFor="company_name"
-                    className="text-sm text-gray-700"
-                  >
-                    Company Name
-                  </Label>
-                  <Input
-                    id="company_name"
-                    name="company_name"
-                    placeholder="Acme Corporation"
-                    value={formData.company_name}
-                    onChange={handleChange}
-                    className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="industry" className="text-sm text-gray-700">
-                    Industry
-                  </Label>
-                  <Select
-                    name="industry"
-                    value={formData.industry}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, industry: value })
-                    }
-                  >
-                    <SelectTrigger
-                      id="industry"
-                      className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 flex items-center justify-between focus-visible:ring-[#355E34] focus-visible:ring-2"
+              <div className="mt-4 flex flex-col gap-6">
+                {/* Company Name + Industry */}
+                <div className="flex flex-col gap-6 sm:grid sm:grid-cols-3 sm:gap-6">
+                  <div className="sm:col-span-2 flex flex-col gap-2">
+                    <Label
+                      htmlFor="company_name"
+                      className="text-sm text-gray-700"
                     >
-                      <SelectValue placeholder="Select industry" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl h-70 overflow-y-auto">
-                      {INDUSTRIES.map((item) => (
-                        <SelectItem key={item} value={item}>
-                          {item}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                      Company Name
+                    </Label>
+                    <Input
+                      id="company_name"
+                      name="company_name"
+                      placeholder="Acme Corporation"
+                      value={formData.company_name}
+                      onChange={handleChange}
+                      className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
+                    />
+                  </div>
 
-              {/* Contact Person + Contact Number */}
-              <div className="flex flex-col gap-6 sm:grid sm:grid-cols-2 sm:gap-6">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="industry" className="text-sm text-gray-700">
+                      Industry
+                    </Label>
+                    <Select
+                      name="industry"
+                      value={formData.industry}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, industry: value })
+                      }
+                    >
+                      <SelectTrigger
+                        id="industry"
+                        className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 flex items-center justify-between focus-visible:ring-[#355E34] focus-visible:ring-2"
+                      >
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl h-70 overflow-y-auto">
+                        {INDUSTRIES.map((item) => (
+                          <SelectItem key={item} value={item}>
+                            {item}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Contact Person + Contact Number */}
+                <div className="flex flex-col gap-6 sm:grid sm:grid-cols-2 sm:gap-6">
+                  <div className="flex flex-col gap-2">
+                    <Label
+                      htmlFor="contact_person"
+                      className="text-sm text-gray-700"
+                    >
+                      Contact Person
+                    </Label>
+                    <Input
+                      id="contact_person"
+                      name="contact_person"
+                      placeholder="Jane Doe"
+                      value={formData.contact_person}
+                      onChange={handleChange}
+                      className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Label
+                      htmlFor="contact_number"
+                      className="text-sm text-gray-700"
+                    >
+                      Contact Number
+                    </Label>
+                    <Input
+                      id="contact_number"
+                      name="contact_number"
+                      placeholder="09xxxxxxxxx"
+                      value={formData.contact_number}
+                      onChange={handleChange}
+                      maxLength={11}
+                      className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
                 <div className="flex flex-col gap-2">
                   <Label
-                    htmlFor="contact_person"
+                    htmlFor="email_address"
                     className="text-sm text-gray-700"
                   >
-                    Contact Person
+                    Email Address
                   </Label>
                   <Input
-                    id="contact_person"
-                    name="contact_person"
-                    placeholder="Jane Doe"
-                    value={formData.contact_person}
+                    id="email_address"
+                    name="email_address"
+                    type="email"
+                    placeholder="jane@acme.com"
+                    value={formData.email_address}
                     onChange={handleChange}
                     className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
                   />
                 </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label
-                    htmlFor="contact_number"
-                    className="text-sm text-gray-700"
-                  >
-                    Contact Number
-                  </Label>
-                  <Input
-                    id="contact_number"
-                    name="contact_number"
-                    placeholder="09xxxxxxxxx"
-                    value={formData.contact_number}
-                    onChange={handleChange}
-                    maxLength={11}
-                    className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
-                  />
-                </div>
               </div>
 
-              {/* Email */}
-              <div className="flex flex-col gap-2">
-                <Label
-                  htmlFor="email_address"
-                  className="text-sm text-gray-700"
+              <DialogFooter className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-4">
+                <DialogClose asChild>
+                  <Button variant="outline" className="h-11 rounded-xl">
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button
+                  type="submit"
+                  className="bg-[#355E34] h-11 rounded-xl"
+                  disabled={submitting}
                 >
-                  Email Address
-                </Label>
-                <Input
-                  id="email_address"
-                  name="email_address"
-                  type="email"
-                  placeholder="jane@acme.com"
-                  value={formData.email_address}
-                  onChange={handleChange}
-                  className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-4">
-              <DialogClose asChild>
-                <Button variant="outline" className="h-11 rounded-xl">
-                  Cancel
+                  {submitting ? "Saving..." : "Save Prospects"}
                 </Button>
-              </DialogClose>
-              <Button
-                type="submit"
-                className="bg-[#355E34] h-11 rounded-xl"
-                disabled={submitting}
-              >
-                {submitting ? "Saving..." : "Save Prospects"}
-              </Button>
-            </DialogFooter>
-          </form>
+              </DialogFooter>
+            </form>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </section>
