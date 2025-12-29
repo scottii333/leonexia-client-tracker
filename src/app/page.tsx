@@ -3,7 +3,7 @@ import { LogIn } from "@/components/LogIn";
 
 const Home = () => {
   return (
-    <section className="container mx-auto px-4">
+    <section className="min-h-screen bg-[#355E34] flex items-center justify-center">
       <LogIn />
     </section>
   );
