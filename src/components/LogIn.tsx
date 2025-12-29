@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
+import Image from "next/image";
+import Link from "next/link";
 export const LogIn = () => {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -43,10 +44,23 @@ export const LogIn = () => {
       <div className="w-full max-w-md rounded-3xl border border-gray-200 bg-white shadow-xl">
         <div className="p-8">
           {/* Header */}
-          <div className="mb-6 text-center space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-              Welcome Back, <span className="text-[#355E34]">Leonexian</span> 👋
-            </h1>
+          <div className="mb-6 text-center space-y-2 flex flex-col items-center">
+            {" "}
+            <Link href="/" className="flex items-center gap-1 relative">
+              {/* Logo image */}
+              <Image
+                src="/LeonexiaTransparent.png"
+                alt="Leonexia Logo"
+                width={40}
+                height={40}
+                priority
+              />
+
+              {/* Text logo with underline effect */}
+              <span className="relative inline-block text-[1.5rem] font-semibold after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-1.25 after:w-1/2 after:bg-[#355E34]">
+                Leonexia
+              </span>
+            </Link>
             <p className="text-sm text-gray-500">
               Sign in to continue to your dashboard
             </p>
