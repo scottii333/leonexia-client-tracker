@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,20 +21,130 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import axios, { AxiosResponse } from "axios";
+import { toast } from "sonner";
+import { INDUSTRIES } from "@/lib/industries";
+
+interface ServerProspect {
+  id: number | string;
+  company_name: string;
+  contact_person: string;
+  contact_number: string;
+  industry?: string | null;
+  email_address?: string | null;
+  call_status?: string | null;
+  status?: string | null;
+  remark?: string | null;
+  date_added?: string | null;
+  date_updated?: string | null;
+  [k: string]: unknown;
+}
+
+interface ApiResponse<T> {
+  data: T;
+  pagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+  error?: string;
+  success?: boolean;
+}
 
 export const AddProspectsDialog: React.FC = () => {
-  return (
-    <section className="flex justify-center ">
-      <Dialog>
-        <form className="w-full max-w-2xl">
-          <DialogTrigger asChild>
-            <Button className="bg-[#355E34] w-full h-11 rounded-xl hover:bg-[#2c4c2b] transition-all duration-200 shadow-sm hover:shadow-md">
-              + Add New Prospect
-            </Button>
-          </DialogTrigger>
+  const [formData, setFormData] = useState({
+    company_name: "",
+    industry: "",
+    contact_person: "",
+    contact_number: "09",
+    email_address: "",
+  });
 
-          {/* overflow-visible so dropdown can render below the dialog content */}
-          <DialogContent className="sm:max-w-2xl w-full p-6 overflow-visible">
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+
+    if (name === "contact_number") {
+      let formattedValue = value.replace(/\D/g, "");
+      if (!formattedValue.startsWith("09")) formattedValue = "09";
+      if (formattedValue.length > 11)
+        formattedValue = formattedValue.slice(0, 11);
+      setFormData({ ...formData, [name]: formattedValue });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (submitting) return;
+    setSubmitting(true);
+
+    try {
+      // normalize industry to lowercase for storage
+      const payload = {
+        ...formData,
+        industry: formData.industry ? formData.industry.toLowerCase() : "",
+      };
+
+      const res: AxiosResponse<ApiResponse<ServerProspect>> = await axios.post(
+        "/api/prospects",
+        payload
+      );
+
+      const created: ServerProspect | null = res.data?.data ?? null;
+
+      toast.success("Prospect added successfully!");
+
+      // clear form
+      setFormData({
+        company_name: "",
+        industry: "",
+        contact_person: "",
+        contact_number: "09",
+        email_address: "",
+      });
+
+      // close dialog
+      setOpen(false);
+
+      // Dispatch event so other components (ProspectTable) can refresh
+      if (typeof window !== "undefined") {
+        const evt = new CustomEvent<ServerProspect>("prospect:added", {
+          detail: created as ServerProspect,
+        });
+        window.dispatchEvent(evt);
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Failed to add prospect");
+      } else if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="flex justify-center">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="bg-[#355E34] w-full h-11 rounded-xl hover:bg-[#2c4c2b] transition-all duration-200 shadow-sm hover:shadow-md">
+            + Add New Prospect
+          </Button>
+        </DialogTrigger>
+
+        <DialogContent className="sm:max-w-2xl w-full p-6 overflow-visible">
+          <form onSubmit={handleSubmit} className="w-full">
             <DialogHeader>
               <DialogTitle>Add Prospect</DialogTitle>
               <DialogDescription>
@@ -43,7 +153,7 @@ export const AddProspectsDialog: React.FC = () => {
             </DialogHeader>
 
             <div className="mt-4 flex flex-col gap-6">
-              {/* Row: Company Name + Industry (mobile stacked, sm:grid-cols-3 for larger screens) */}
+              {/* Company Name + Industry */}
               <div className="flex flex-col gap-6 sm:grid sm:grid-cols-3 sm:gap-6">
                 <div className="sm:col-span-2 flex flex-col gap-2">
                   <Label
@@ -56,6 +166,8 @@ export const AddProspectsDialog: React.FC = () => {
                     id="company_name"
                     name="company_name"
                     placeholder="Acme Corporation"
+                    value={formData.company_name}
+                    onChange={handleChange}
                     className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
                   />
                 </div>
@@ -64,42 +176,31 @@ export const AddProspectsDialog: React.FC = () => {
                   <Label htmlFor="industry" className="text-sm text-gray-700">
                     Industry
                   </Label>
-                  <Select name="industry">
+                  <Select
+                    name="industry"
+                    value={formData.industry}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, industry: value })
+                    }
+                  >
                     <SelectTrigger
                       id="industry"
                       className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 flex items-center justify-between focus-visible:ring-[#355E34] focus-visible:ring-2"
                     >
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
-
                     <SelectContent className="rounded-xl h-70 overflow-y-auto">
-                      <SelectItem value="law">Law Firm</SelectItem>
-                      <SelectItem value="construction">Construction</SelectItem>
-                      <SelectItem value="food">Food</SelectItem>
-                      <SelectItem value="car">Car / Automotive</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="school">School / Education</SelectItem>
-                      <SelectItem value="travel">Travel / Tourism</SelectItem>
-                      <SelectItem value="cafe">Cafe / Restaurant</SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="government">Government</SelectItem>
-                      <SelectItem value="restaurant">Restaurant</SelectItem>
-                      <SelectItem value="resort">
-                        Resort / Hospitality
-                      </SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
-                      <SelectItem value="technology">Technology</SelectItem>
-                      <SelectItem value="retail">Retail</SelectItem>
-                      <SelectItem value="manufacturing">
-                        Manufacturing
-                      </SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {INDUSTRIES.map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {item}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              {/* Row: Contact Person + Contact Number (mobile stacked, sm:grid-cols-2 for larger screens) */}
+              {/* Contact Person + Contact Number */}
               <div className="flex flex-col gap-6 sm:grid sm:grid-cols-2 sm:gap-6">
                 <div className="flex flex-col gap-2">
                   <Label
@@ -112,6 +213,8 @@ export const AddProspectsDialog: React.FC = () => {
                     id="contact_person"
                     name="contact_person"
                     placeholder="Jane Doe"
+                    value={formData.contact_person}
+                    onChange={handleChange}
                     className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
                   />
                 </div>
@@ -127,12 +230,15 @@ export const AddProspectsDialog: React.FC = () => {
                     id="contact_number"
                     name="contact_number"
                     placeholder="09xxxxxxxxx"
+                    value={formData.contact_number}
+                    onChange={handleChange}
+                    maxLength={11}
                     className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
                   />
                 </div>
               </div>
 
-              {/* Email Address */}
+              {/* Email */}
               <div className="flex flex-col gap-2">
                 <Label
                   htmlFor="email_address"
@@ -145,6 +251,8 @@ export const AddProspectsDialog: React.FC = () => {
                   name="email_address"
                   type="email"
                   placeholder="jane@acme.com"
+                  value={formData.email_address}
+                  onChange={handleChange}
                   className="h-11 w-full rounded-xl border border-gray-300 bg-white text-sm leading-6 px-4 focus-visible:ring-[#355E34] focus-visible:ring-2"
                 />
               </div>
@@ -156,12 +264,16 @@ export const AddProspectsDialog: React.FC = () => {
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit" className="bg-[#355E34] h-11 rounded-xl">
-                Save Prospects
+              <Button
+                type="submit"
+                className="bg-[#355E34] h-11 rounded-xl"
+                disabled={submitting}
+              >
+                {submitting ? "Saving..." : "Save Prospects"}
               </Button>
             </DialogFooter>
-          </DialogContent>
-        </form>
+          </form>
+        </DialogContent>
       </Dialog>
     </section>
   );
