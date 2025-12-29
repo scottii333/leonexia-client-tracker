@@ -629,38 +629,27 @@ export const ProspectTable: React.FC = () => {
                 />
               </div>
 
-              {/* Date Added (read-only) */}
+              {/* Date Added (text only) */}
               <div className="flex flex-col gap-2">
                 <Label>Date Added</Label>
-                <Input
-                  value={
-                    selectedProspect?.dateAdded
-                      ? format(
-                          new Date(selectedProspect.dateAdded),
-                          "yyyy-MM-dd"
-                        )
-                      : ""
-                  }
-                  readOnly
-                  className="h-11 w-full rounded-xl border border-[#355E34] bg-[#fafafa] text-[#333]"
-                />
+                <div className="h-11 w-full rounded-xl border border-[#355E34] bg-[#fafafa] flex items-center px-3 text-[#333]">
+                  {selectedProspect?.dateAdded
+                    ? format(new Date(selectedProspect.dateAdded), "yyyy-MM-dd")
+                    : "—"}
+                </div>
               </div>
 
-              {/* Date Updated (read-only) */}
+              {/* Date Updated (text only) */}
               <div className="flex flex-col gap-2">
                 <Label>Date Updated</Label>
-                <Input
-                  value={
-                    selectedProspect?.dateUpdated
-                      ? format(
-                          new Date(selectedProspect.dateUpdated),
-                          "yyyy-MM-dd"
-                        )
-                      : ""
-                  }
-                  readOnly
-                  className="h-11 w-full rounded-xl border border-[#355E34] bg-[#fafafa] text-[#333]"
-                />
+                <div className="h-11 w-full rounded-xl border border-[#355E34] bg-[#fafafa] flex items-center px-3 text-[#333]">
+                  {selectedProspect?.dateUpdated
+                    ? format(
+                        new Date(selectedProspect.dateUpdated),
+                        "yyyy-MM-dd"
+                      )
+                    : "—"}
+                </div>
               </div>
             </div>
           </ScrollArea>
