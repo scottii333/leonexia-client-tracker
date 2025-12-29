@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -229,13 +230,19 @@ export const ProspectTable = () => {
                     : "Select Date"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-2">
                 <Calendar
                   mode="single"
                   selected={dateFilter}
                   onSelect={setDateFilter}
-                  className="rounded-md border"
+                  className=""
                 />
+                <Button
+                  className="mt-2 w-full h-10 rounded-xl bg-[#355E34] text-white hover:bg-[#2c4c2b] cursor-pointer"
+                  onClick={() => setDateFilter(undefined)}
+                >
+                  Clear
+                </Button>
               </PopoverContent>
             </Popover>
           </div>
@@ -287,11 +294,263 @@ export const ProspectTable = () => {
                           <Edit size={16} />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-2xl w-full p-6 overflow-visible">
+
+                      <DialogContent className="sm:max-w-2xl w-full overflow-visible">
                         <DialogHeader>
                           <DialogTitle>Edit Prospect</DialogTitle>
                         </DialogHeader>
-                        <DialogFooter className="mt-4 flex justify-end gap-4">
+
+                        {/* Scrollable content */}
+                        <ScrollArea className="max-h-100 pr-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 p-1">
+                            {/* Company Name */}
+                            <div className="flex flex-col gap-2">
+                              <Label>Company Name</Label>
+                              <Input
+                                value={selectedProspect?.companyName || ""}
+                                onChange={(e) =>
+                                  setSelectedProspect((prev) =>
+                                    prev
+                                      ? { ...prev, companyName: e.target.value }
+                                      : prev
+                                  )
+                                }
+                                className="h-11 rounded-xl border border-[#355E34] focus-visible:ring-[#355E34] focus-visible:ring-2"
+                              />
+                            </div>
+
+                            {/* Contact Person */}
+                            <div className="flex flex-col gap-2">
+                              <Label>Contact Person</Label>
+                              <Input
+                                value={selectedProspect?.contactPerson || ""}
+                                onChange={(e) =>
+                                  setSelectedProspect((prev) =>
+                                    prev
+                                      ? {
+                                          ...prev,
+                                          contactPerson: e.target.value,
+                                        }
+                                      : prev
+                                  )
+                                }
+                                className="h-11 rounded-xl border border-[#355E34] focus-visible:ring-[#355E34] focus-visible:ring-2"
+                              />
+                            </div>
+
+                            {/* Contact Number */}
+                            <div className="flex flex-col gap-2">
+                              <Label>Contact Number</Label>
+                              <Input
+                                value={selectedProspect?.contactNumber || ""}
+                                onChange={(e) =>
+                                  setSelectedProspect((prev) =>
+                                    prev
+                                      ? {
+                                          ...prev,
+                                          contactNumber: e.target.value,
+                                        }
+                                      : prev
+                                  )
+                                }
+                                className="h-11 rounded-xl border border-[#355E34] focus-visible:ring-[#355E34] focus-visible:ring-2"
+                              />
+                            </div>
+
+                            {/* Industry */}
+                            <div className="flex flex-col gap-2">
+                              <Label>Industry</Label>
+                              <Select
+                                value={selectedProspect?.industry || "all"}
+                                onValueChange={(value) =>
+                                  setSelectedProspect((prev) =>
+                                    prev ? { ...prev, industry: value } : prev
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="h-11 w-full rounded-xl border border-[#355E34]">
+                                  <SelectValue placeholder="Select Industry" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl h-70 overflow-y-auto">
+                                  <SelectItem value="Law Firm">
+                                    Law Firm
+                                  </SelectItem>
+                                  <SelectItem value="Construction">
+                                    Construction
+                                  </SelectItem>
+                                  <SelectItem value="Food">Food</SelectItem>
+                                  <SelectItem value="Car / Automotive">
+                                    Car / Automotive
+                                  </SelectItem>
+                                  <SelectItem value="Marketing">
+                                    Marketing
+                                  </SelectItem>
+                                  <SelectItem value="School / Education">
+                                    School / Education
+                                  </SelectItem>
+                                  <SelectItem value="Travel / Tourism">
+                                    Travel / Tourism
+                                  </SelectItem>
+                                  <SelectItem value="Cafe / Restaurant">
+                                    Cafe / Restaurant
+                                  </SelectItem>
+                                  <SelectItem value="Healthcare">
+                                    Healthcare
+                                  </SelectItem>
+                                  <SelectItem value="Government">
+                                    Government
+                                  </SelectItem>
+                                  <SelectItem value="Restaurant">
+                                    Restaurant
+                                  </SelectItem>
+                                  <SelectItem value="Resort / Hospitality">
+                                    Resort / Hospitality
+                                  </SelectItem>
+                                  <SelectItem value="Finance">
+                                    Finance
+                                  </SelectItem>
+                                  <SelectItem value="Technology">
+                                    Technology
+                                  </SelectItem>
+                                  <SelectItem value="Retail">Retail</SelectItem>
+                                  <SelectItem value="Manufacturing">
+                                    Manufacturing
+                                  </SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Call Status */}
+                            <div className="flex flex-col gap-2">
+                              <Label>Call Status</Label>
+                              <Select
+                                value={selectedProspect?.callStatus || "all"}
+                                onValueChange={(value) =>
+                                  setSelectedProspect((prev) =>
+                                    prev ? { ...prev, callStatus: value } : prev
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="h-11 w-full rounded-xl border border-[#355E34]">
+                                  <SelectValue placeholder="Select Call Status" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl h-70 overflow-y-auto">
+                                  <SelectItem value="Called">Called</SelectItem>
+                                  <SelectItem value="No Answer">
+                                    No Answer
+                                  </SelectItem>
+                                  <SelectItem value="Not Called">
+                                    Not Called
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Status */}
+                            <div className="flex flex-col gap-2">
+                              <Label>Status</Label>
+                              <Select
+                                value={selectedProspect?.status || "all"}
+                                onValueChange={(value) =>
+                                  setSelectedProspect((prev) =>
+                                    prev ? { ...prev, status: value } : prev
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="h-11 w-full rounded-xl border border-[#355E34]">
+                                  <SelectValue placeholder="Select Status" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl h-70 overflow-y-auto">
+                                  <SelectItem value="Declined">
+                                    Declined
+                                  </SelectItem>
+                                  <SelectItem value="Interested">
+                                    Interested
+                                  </SelectItem>
+                                  <SelectItem value="Secured">
+                                    Secured
+                                  </SelectItem>
+                                  <SelectItem value="Client">Client</SelectItem>
+                                  <SelectItem value="Ongoing">
+                                    Ongoing
+                                  </SelectItem>
+                                  <SelectItem value="Prospect">
+                                    Prospect
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Remark */}
+                            <div className="flex flex-col gap-2 sm:col-span-2">
+                              <Label>Remark</Label>
+                              <Input
+                                value={selectedProspect?.remark || ""}
+                                onChange={(e) =>
+                                  setSelectedProspect((prev) =>
+                                    prev
+                                      ? { ...prev, remark: e.target.value }
+                                      : prev
+                                  )
+                                }
+                                placeholder="Enter remark..."
+                                className="h-24 rounded-xl border border-[#355E34] focus-visible:ring-[#355E34] focus-visible:ring-2"
+                              />
+                            </div>
+
+                            {/* Date Added */}
+                            <div className="flex flex-col gap-2">
+                              <Label>Date Added</Label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="h-11 w-full rounded-xl border border-[#355E34] text-left"
+                                  >
+                                    {selectedProspect?.dateAdded
+                                      ? selectedProspect.dateAdded
+                                      : "Select Date"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-2">
+                                  <Calendar
+                                    mode="single"
+                                    selected={
+                                      selectedProspect?.dateAdded
+                                        ? new Date(selectedProspect.dateAdded)
+                                        : undefined
+                                    }
+                                    onSelect={(date) =>
+                                      setSelectedProspect((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              dateAdded: date
+                                                ? format(date, "yyyy-MM-dd")
+                                                : "",
+                                            }
+                                          : prev
+                                      )
+                                    }
+                                  />
+                                  <Button
+                                    className="mt-2 w-full h-10 rounded-xl bg-[#355E34] text-white hover:bg-[#2c4c2b] cursor-pointer"
+                                    onClick={() =>
+                                      setSelectedProspect((prev) =>
+                                        prev ? { ...prev, dateAdded: "" } : prev
+                                      )
+                                    }
+                                  >
+                                    Clear
+                                  </Button>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          </div>
+                        </ScrollArea>
+
+                        <DialogFooter className="mt-6 flex justify-end gap-4">
                           <DialogClose asChild>
                             <Button
                               variant="outline"
@@ -301,7 +560,7 @@ export const ProspectTable = () => {
                             </Button>
                           </DialogClose>
                           <Button className="bg-[#355E34] h-11 rounded-xl text-white hover:bg-[#2c4c2b]">
-                            Save Changes
+                            Update
                           </Button>
                         </DialogFooter>
                       </DialogContent>
