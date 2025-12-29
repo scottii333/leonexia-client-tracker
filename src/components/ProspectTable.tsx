@@ -114,6 +114,10 @@ export const ProspectTable: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState<number | null>(null);
 
+  // remark limits
+  const REMARK_MAX_CHARS = 500;
+  const REMARK_MAX_WORDS = 100;
+
   // Map the lowercase industry from the server to the display string from INDUSTRIES
   const displayIndustryFromServer = (serverIndustry?: string): string => {
     if (!serverIndustry) return "";
@@ -249,6 +253,30 @@ export const ProspectTable: React.FC = () => {
     setEditOpen(true);
   };
 
+  const handleRemarkChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    let val = e.target.value;
+
+    if (val.length > REMARK_MAX_CHARS) {
+      val = val.slice(0, REMARK_MAX_CHARS);
+    }
+
+    const words = val.trim().length > 0 ? val.trim().split(/\s+/) : [];
+    if (words.length > REMARK_MAX_WORDS) {
+      val = words.slice(0, REMARK_MAX_WORDS).join(" ");
+      if (val.length > REMARK_MAX_CHARS) {
+        val = val.slice(0, REMARK_MAX_CHARS);
+      }
+    }
+
+    setSelectedProspect((prev) => (prev ? { ...prev, remark: val } : prev));
+  };
+
+  const remarkCharCount = selectedProspect?.remark?.length ?? 0;
+  const remarkWordCount =
+    selectedProspect?.remark && selectedProspect.remark.trim().length > 0
+      ? selectedProspect.remark.trim().split(/\s+/).filter(Boolean).length
+      : 0;
+
   const handleUpdate = async (): Promise<void> => {
     if (!selectedProspect) return;
     setUpdating(true);
@@ -285,12 +313,27 @@ export const ProspectTable: React.FC = () => {
       setSelectedProspect(null);
     } catch (err: unknown) {
       console.error("Update failed:", err);
-
       toast.error(getErrorMessage(err));
     } finally {
       setUpdating(false);
     }
   };
+
+  // helper to render truncated cells with tooltip
+  const TruncatedCell: React.FC<{ text?: string; maxW?: string }> = ({
+    text = "",
+    maxW = "max-w-[200px]",
+  }) => (
+    <div className={`overflow-hidden ${maxW}`}>
+      <div
+        className="truncate"
+        title={text}
+        style={{ display: "inline-block", width: "100%" }}
+      >
+        {text}
+      </div>
+    </div>
+  );
 
   const filteredData = data; // server-side filtering/pagination handled by API
 
@@ -445,25 +488,46 @@ export const ProspectTable: React.FC = () => {
                     </Button>
                   </TableCell>
                   <TableCell className="text-[#1a3d24]">
-                    {prospect.companyName}
+                    <TruncatedCell
+                      text={prospect.companyName}
+                      maxW="max-w-[280px]"
+                    />
                   </TableCell>
                   <TableCell className="text-[#1a3d24]">
-                    {prospect.contactPerson}
+                    <TruncatedCell
+                      text={prospect.contactPerson}
+                      maxW="max-w-[200px]"
+                    />
                   </TableCell>
                   <TableCell className="text-[#1a3d24]">
-                    {prospect.contactNumber}
+                    <TruncatedCell
+                      text={prospect.contactNumber}
+                      maxW="max-w-[140px]"
+                    />
                   </TableCell>
                   <TableCell className="text-[#1a3d24]">
-                    {prospect.industry}
+                    <TruncatedCell
+                      text={prospect.industry}
+                      maxW="max-w-[160px]"
+                    />
                   </TableCell>
                   <TableCell className="text-[#1a3d24]">
-                    {prospect.callStatus}
+                    <TruncatedCell
+                      text={prospect.callStatus}
+                      maxW="max-w-[140px]"
+                    />
                   </TableCell>
                   <TableCell className="text-[#1a3d24]">
-                    {prospect.status}
+                    <TruncatedCell
+                      text={prospect.status}
+                      maxW="max-w-[120px]"
+                    />
                   </TableCell>
                   <TableCell className="text-[#1a3d24]">
-                    {prospect.remark}
+                    <TruncatedCell
+                      text={prospect.remark}
+                      maxW="max-w-[300px]"
+                    />
                   </TableCell>
                   <TableCell className="text-[#1a3d24]">
                     {prospect.dateAdded
@@ -533,12 +597,68 @@ export const ProspectTable: React.FC = () => {
               <div className="flex flex-col gap-2">
                 <Label>Contact Number</Label>
                 <Input
-                  value={selectedProspect?.contactNumber || ""}
-                  onChange={(e) =>
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={11}
+                  value={selectedProspect?.contactNumber || "09"}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    // keep digits only
+                    let v = e.target.value.replace(/\D/g, "");
+
+                    // If empty, keep the '09' prefix
+                    if (v.length === 0) {
+                      v = "09";
+                    }
+
+                    // Ensure it starts with "09"
+                    if (!v.startsWith("09")) {
+                      const noLeading = v.replace(/^0+/, "");
+                      v = "09" + noLeading;
+                    }
+
+                    // limit to 11 digits
+                    if (v.length > 11) v = v.slice(0, 11);
+
                     setSelectedProspect((prev) =>
-                      prev ? { ...prev, contactNumber: e.target.value } : prev
-                    )
-                  }
+                      prev ? { ...prev, contactNumber: v } : prev
+                    );
+                  }}
+                  onBlur={() => {
+                    // ensure we don't leave it empty or invalid on blur
+                    setSelectedProspect((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            contactNumber:
+                              prev.contactNumber &&
+                              prev.contactNumber.length >= 2
+                                ? prev.contactNumber.slice(0, 11)
+                                : "09",
+                          }
+                        : prev
+                    );
+                  }}
+                  onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
+                    const paste = e.clipboardData.getData("text");
+                    // allow paste only if it contains digits; otherwise prevent
+                    if (!/^\d+$/.test(paste)) {
+                      e.preventDefault();
+                      return;
+                    }
+                    // sanitize pasted digits and apply limits immediately
+                    let v = paste.replace(/\D/g, "");
+                    if (!v.startsWith("09")) {
+                      const noLeading = v.replace(/^0+/, "");
+                      v = "09" + noLeading;
+                    }
+                    if (v.length > 11) v = v.slice(0, 11);
+
+                    // set value manually (preventDefault so the sanitized value is used)
+                    e.preventDefault();
+                    setSelectedProspect((prev) =>
+                      prev ? { ...prev, contactNumber: v } : prev
+                    );
+                  }}
                   className="h-11 rounded-xl border border-[#355E34] focus-visible:ring-[#355E34] focus-visible:ring-2"
                 />
               </div>
@@ -619,20 +739,24 @@ export const ProspectTable: React.FC = () => {
                 <Label>Remark</Label>
                 <Textarea
                   value={selectedProspect?.remark || ""}
-                  onChange={(e) =>
-                    setSelectedProspect((prev) =>
-                      prev ? { ...prev, remark: e.target.value } : prev
-                    )
-                  }
+                  onChange={handleRemarkChange}
                   placeholder="Enter remark..."
                   className="h-24 rounded-xl border border-[#355E34] focus-visible:ring-[#355E34] focus-visible:ring-2"
                 />
+                <div className="flex justify-between text-sm text-muted-foreground mt-1">
+                  <div>
+                    {remarkWordCount}/{REMARK_MAX_WORDS} words
+                  </div>
+                  <div>
+                    {remarkCharCount}/{REMARK_MAX_CHARS} chars
+                  </div>
+                </div>
               </div>
 
               {/* Date Added (text only) */}
               <div className="flex flex-col gap-2">
                 <Label>Date Added</Label>
-                <div className="h-11 w-full rounded-xl border border-[#355E34] bg-[#fafafa] flex items-center px-3 text-[#333]">
+                <div className="h-11 w-full rounded-xl bg-[#fafafa] flex items-center px-3 text-[#333]">
                   {selectedProspect?.dateAdded
                     ? format(new Date(selectedProspect.dateAdded), "yyyy-MM-dd")
                     : "—"}
@@ -642,7 +766,7 @@ export const ProspectTable: React.FC = () => {
               {/* Date Updated (text only) */}
               <div className="flex flex-col gap-2">
                 <Label>Date Updated</Label>
-                <div className="h-11 w-full rounded-xl border border-[#355E34] bg-[#fafafa] flex items-center px-3 text-[#333]">
+                <div className="h-11 w-full rounded-xl bg-[#fafafa] flex items-center px-3 text-[#333]">
                   {selectedProspect?.dateUpdated
                     ? format(
                         new Date(selectedProspect.dateUpdated),
