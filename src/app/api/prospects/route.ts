@@ -15,20 +15,24 @@ export const GET = async (req: Request) => {
     }
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1", 10);
+    const pageRaw = searchParams.get("page") || "1";
+    const page = parseInt(pageRaw, 10);
+    const pageSizeRaw = searchParams.get("pageSize");
+    const pageSize = pageSizeRaw ? parseInt(pageSizeRaw, 10) : 20;
+    const all =
+      searchParams.get("all") === "1" || searchParams.get("all") === "true";
+
     const search = searchParams.get("search") || "";
     const industry = searchParams.get("industry") || "";
     const callStatus = searchParams.get("callStatus") || "";
     const status = searchParams.get("status") || "";
     const date = searchParams.get("date") || "";
 
-    const pageSize = 20;
     const offset = (page - 1) * pageSize;
 
     let query = supabaseAdmin
       .from("prospects")
       .select("*", { count: "exact" })
-      .range(offset, offset + pageSize - 1)
       .order("id", { ascending: false });
 
     if (search) {
@@ -55,17 +59,45 @@ export const GET = async (req: Request) => {
       query = query.eq("date_added", date);
     }
 
+    // If client asked for all rows, do not apply range; otherwise apply pagination range
+    if (!all) {
+      // ensure positive pageSize
+      const effectivePageSize =
+        Number.isFinite(pageSize) && pageSize > 0 ? pageSize : 20;
+      query = query.range(offset, offset + effectivePageSize - 1);
+    } // else: fetch all rows (no .range)
+
     const { data, error, count } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    const totalPages = Math.ceil((count || 0) / pageSize);
+    // Compute pagination only when not returning all
+    let pagination;
+    if (!all) {
+      const effectivePageSize =
+        Number.isFinite(pageSize) && pageSize > 0 ? pageSize : 20;
+      const totalPages = Math.ceil((count || 0) / effectivePageSize);
+      pagination = {
+        page,
+        pageSize: effectivePageSize,
+        total: count,
+        totalPages,
+      };
+    } else {
+      // when returning all, show total = count and single page
+      pagination = {
+        page: 1,
+        pageSize: count ?? (Array.isArray(data) ? data.length : 0),
+        total: count ?? (Array.isArray(data) ? data.length : 0),
+        totalPages: 1,
+      };
+    }
 
     return NextResponse.json({
       data,
-      pagination: { page, pageSize, total: count, totalPages },
+      pagination,
     });
   } catch (err) {
     console.error("GET /prospects error:", err);

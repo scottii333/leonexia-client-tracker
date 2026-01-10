@@ -166,11 +166,15 @@ export const ProspectTable: React.FC = () => {
     return String(err);
   };
 
+  // NOTE: request all items by sending all=1 to the API
   const fetchProspects = async (pageToFetch = 1): Promise<void> => {
     setLoading(true);
     try {
       const params: Record<string, string | number> = {
+        // keep page if server decides to paginate; we request all below
         page: pageToFetch,
+        // ask server to return all rows (no 20-row limit)
+        all: "1",
       };
 
       if (search.trim()) params.search = search.trim();
@@ -196,15 +200,17 @@ export const ProspectTable: React.FC = () => {
       const mapped = resData.data.map(mapServerToProspect);
       setData(mapped);
 
+      // When server returns pagination we respect it, otherwise null
       if (
         resData.pagination &&
         typeof resData.pagination.totalPages === "number"
       ) {
         setTotalPages(resData.pagination.totalPages);
+        setPage(resData.pagination.page || pageToFetch);
       } else {
         setTotalPages(null);
+        setPage(1);
       }
-      setPage(pageToFetch);
     } catch (err: unknown) {
       console.error("Failed to fetch prospects:", err);
       toast.error(getErrorMessage(err));
@@ -307,7 +313,7 @@ export const ProspectTable: React.FC = () => {
 
       toast.success("Prospect updated");
 
-      await fetchProspects(page);
+      await fetchProspects(1);
 
       setEditOpen(false);
       setSelectedProspect(null);
